@@ -6,6 +6,7 @@ authors = [
     { name = "Omegaice", email = "950526+Omegaice@users.noreply.github.com" }
 ]
 requires-python = ">=3.11"
+license = {text = "MIT"}
 dependencies = [
     "pydantic>=2.11.3",
     "rdflib>=7.1.4",

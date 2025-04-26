@@ -1,0 +1,8 @@
+---
+description: Guidance on how to define tests
+globs: tests/**/*.py
+alwaysApply: false
+---
+
+You SHOULD ensure that each test follows the Single Responsibility Principle.
+You SHOULD implement any tests before modifying code anyhere else and then run the specific test.

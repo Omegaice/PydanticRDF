@@ -1,0 +1,126 @@
+---
+description: UV Dependency Management Guide for LLM Agents
+globs: 
+alwaysApply: true
+---
+
+## Overview
+UV is a high-performance Python package manager written in Rust that enables modern dependency management through pyproject.toml. This guide provides instructions on how to assist users with UV for dependency management.
+
+## Key Concepts
+- UV replaces pip, pip-tools, venv, and other traditional Python tools
+- UV automatically creates virtual environments when needed
+- UV uses pyproject.toml as the primary configuration file
+- UV generates lock files for reproducible builds
+
+## Core Commands
+
+### Project Setup
+```bash
+# Create a new project with default structure
+uv init project-name
+```
+
+### Dependency Management
+```bash
+# Add dependencies
+uv add package_name
+uv add "package_name>=1.0.0"
+uv add package_name --dev
+uv add package_name --optional feature_name
+uv add package_name --group group_name
+uv add git+https://github.com/org/repo.git
+uv add git+https://github.com/org/repo.git --rev main
+uv add --editable ./local-package
+
+# Remove dependencies
+uv remove package_name
+uv remove package_name --dev
+uv remove package_name --optional feature_name
+uv remove package_name --group group_name
+
+# Synchronize environment
+uv sync
+uv sync --group dev
+uv sync --all-groups
+uv sync --check
+uv sync --upgrade
+uv sync --upgrade-package package_name
+```
+
+### Lock File Operations
+```bash
+# Generate lock file without installing
+uv lock
+
+# Add dependency without updating lock file
+uv add package_name --frozen
+
+# Sync without updating lock file
+uv sync --frozen
+
+# Ensure lock file stays unchanged
+uv add package_name --locked
+```
+
+### Running Commands
+```bash
+# Run command in project environment
+uv run python -m module_name
+uv run python script.py
+```
+
+### Workspace Operations
+```bash
+# Add dependency to specific package
+uv add package_name --package subpackage_name
+
+# Sync all packages
+uv sync --all-packages
+```
+
+## Response Guidelines
+
+When assisting with UV dependency management:
+
+1. Always prioritize `uv add` over editing pyproject.toml manually
+2. Suggest `uv run` instead of activating environments manually
+3. Recommend `uv sync --check` for CI/CD pipelines
+4. Advise use of dependency groups for organizational clarity
+5. Encourage use of lock files for reproducibility
+6. Explain that `uv run` automatically creates virtual environments when needed
+7. Focus on modern pyproject.toml structure over requirements.txt
+8. Highlight speed benefits of UV over traditional Python tools
+
+## Benefits to Emphasize
+- Speed: UV is significantly faster than pip for installations
+- Modern workflow: Integrates directly with pyproject.toml
+- Reproducibility: Automatic lock file generation
+- Simplicity: Unified interface for dependency management
+- Performance: Smart caching for optimized installations
+
+## Common Scenarios
+
+**For beginners needing setup help:**
+```bash
+uv init project_name
+cd project_name
+uv add flask
+uv run python -m project_name
+```
+
+**For projects needing development dependencies:**
+```bash
+uv add pytest black mypy --dev
+uv sync --group dev
+```
+
+**For reproducible CI environments:**
+```bash
+uv sync --frozen
+```
+
+**For upgrading dependencies:**
+```bash
+uv sync --upgrade
+```

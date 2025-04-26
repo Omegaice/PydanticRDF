@@ -1,0 +1,7 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+You SHOULD assume that we are using Python 3.11 as a minimum for this project.
+You SHOULD try and make sure that the code you suggest utilizes Python 3.11 features where possible

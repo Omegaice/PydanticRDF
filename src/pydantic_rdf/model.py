@@ -54,6 +54,23 @@ class TypeInfo(NamedTuple):
     item_type: Any
 
 
+# Custom exceptions
+class CircularReferenceError(Exception):
+    """Raised when a circular reference is detected during RDF parsing."""
+
+    def __init__(self, value: Any) -> None:
+        message = f"Circular reference detected for {value}"
+        super().__init__(message)
+
+
+class UnsupportedFieldTypeError(Exception):
+    """Raised when an unsupported field type is encountered during RDF parsing."""
+
+    def __init__(self, field_type: Any, field_name: str) -> None:
+        message = f"Unsupported field type: {field_type} for field {field_name}"
+        super().__init__(message)
+
+
 class BaseRdfModel(BaseModel):
     """Base class for RDF-mappable Pydantic models."""
 
@@ -66,6 +83,7 @@ class BaseRdfModel(BaseModel):
     uri: URIRef = Field(description="The URI identifier for this RDF entity")
     _graph: Graph = PrivateAttr()
 
+    # TYPE ANALYSIS HELPERS
     @classmethod
     def _get_field_predicate(cls: type[M], field_name: str, field: FieldInfo) -> URIRef:
         """Get RDF predicate URI for a field."""
@@ -114,6 +132,7 @@ class BaseRdfModel(BaseModel):
             return TypeInfo(is_list=False, item_type=cls._get_item_type(item_type))
         return TypeInfo(is_list=False, item_type=annotation)
 
+    # FIELD EXTRACTION AND CONVERSION
     @classmethod
     def _extract_model_type(cls, type_annotation: Any) -> type["BaseRdfModel"] | None:
         # Self reference
@@ -150,7 +169,7 @@ class BaseRdfModel(BaseModel):
             if cached := cache.get((model_type, value)):
                 # Check for circular references
                 if cached is _IN_PROGRESS:
-                    raise RecursionError(f"Circular reference detected for {value}")
+                    raise CircularReferenceError(value)
                 return cached
             return model_type.parse_graph(graph, value, _cache=cache)
 
@@ -188,7 +207,7 @@ class BaseRdfModel(BaseModel):
 
         # Check for unsupported types
         if type_info.item_type is complex:
-            raise TypeError(f"Unsupported field type: {type_info.item_type} for field {field_name}")
+            raise UnsupportedFieldTypeError(type_info.item_type, field_name)
 
         # Process the values based on their type
         if type_info.is_list:
@@ -196,6 +215,7 @@ class BaseRdfModel(BaseModel):
 
         return cls._convert_rdf_value(graph, values[0], type_info.item_type, cache)
 
+    # RDF PARSING
     @classmethod
     def parse_graph(cls: type[T], graph: Graph, uri: URIRef, _cache: RDFEntityCache | None = None) -> T:
         # Initialize cache if not provided
@@ -204,7 +224,7 @@ class BaseRdfModel(BaseModel):
         # Return from cache if already constructed
         if cached := cache.get((cls, uri)):
             if cached is _IN_PROGRESS:
-                raise RecursionError(f"Circular reference detected for {uri}")
+                raise CircularReferenceError(uri)
             return cast(T, cached)
 
         # Mark entry in cache as being built
@@ -243,7 +263,7 @@ class BaseRdfModel(BaseModel):
             cls.parse_graph(graph, uri) for uri in graph.subjects(RDF.type, cls.rdf_type) if isinstance(uri, URIRef)
         ]
 
-    # Serialization
+    # SERIALIZATION
     def model_dump_rdf(self: Self) -> Graph:
         """Serialize a model instance to an RDF graph."""
         graph = Graph()

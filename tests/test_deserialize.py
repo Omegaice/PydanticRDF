@@ -14,7 +14,7 @@ from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace
 from rdflib.extras.describer import Describer
 
 from pydantic_rdf.annotation import WithPredicate
-from pydantic_rdf.model import BaseRdfModel
+from pydantic_rdf.model import BaseRdfModel, CircularReferenceError, UnsupportedFieldTypeError
 
 
 def test_basic_string_field(graph: Graph, EX: Namespace):
@@ -323,7 +323,7 @@ def test_circular_reference(graph: Graph, EX: Namespace):
         d.rel(EX.next, EX.node1)
 
     # Deserialize the entity from the graph
-    with pytest.raises(RecursionError):
+    with pytest.raises(CircularReferenceError):
         Node.parse_graph(graph, EX.node1)
 
 
@@ -340,7 +340,7 @@ def test_field_with_unknown_type(graph: Graph, EX: Namespace):
     d.value(EX.data, Literal("not-a-complex"))
 
     # Deserialize the entity from the graph and assert results
-    with pytest.raises(TypeError):
+    with pytest.raises(UnsupportedFieldTypeError):
         MyType.parse_graph(graph, EX.entity1)
 
 

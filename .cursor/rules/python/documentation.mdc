@@ -1,0 +1,19 @@
+---
+description: Guidance for Python code documentation
+globs: **/*.py
+alwaysApply: false
+---
+
+You SHOULD follow the Google Docstring style.
+You SHOULD provide a concise single sentance summary.
+You SHOULD include a longer description where appropriate
+You SHOULD include a Raises section if appropriate
+You SHOULD include a Args section, only if the arguments's name is not descriptive enough to convey it's purpose.
+You SHOULD include a Parameters section, only if the parameter's name is not descriptive enough to convey it's purpose.
+You SHOULD include a Returns section, only if the function's name is not descriptive enough to convey what is returned.
+You SHOULD include a Warns section if appropriate 
+
+When documenting public functionality:
+    * You SHOULD provide a valid Example section where appropriate wrapped in markdown python codeblocks.
+    * You SHOULD provide a valid Raises section where appropriate which takes into account private function calls.
+    * You SHOULD provide a valid Warns section where appropriate which takes into account private function calls.

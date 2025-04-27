@@ -15,6 +15,7 @@ authors = [
 ]
 description = "Bridge between Pydantic V2 models and RDF graphs"
 readme = "README.md"
+license-files = ["LICEN[CS]E.*"]
 keywords = ["pydantic", "rdf", "semantic web", "linked data", "graph", "serialization"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -29,7 +30,7 @@ classifiers = [
 ]
 
 [project.urls]
-Documentation = "https://Omegaice.github.io/pydantic-rdf"
+Documentation = "https://omegaice.github.io/pydantic-rdf"
 Repository = "https://github.com/Omegaice/pydantic-rdf"
 Changelog = "https://github.com/Omegaice/pydantic-rdf/blob/main/CHANGELOG.md"
 Issues = "https://github.com/Omegaice/pydantic-rdf/issues"

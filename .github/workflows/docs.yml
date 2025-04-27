@@ -23,7 +23,6 @@ concurrency:
 
 jobs:
   build_documentation:
-    needs: generate_coverage_report
     name: Build Documentation
     runs-on: ubuntu-latest
     steps:
@@ -43,10 +42,6 @@ jobs:
           enable-cache: true
       - name: Install the project
         run: uv sync --group docs
-      - uses: actions/download-artifact@v4
-        with:
-          name: coverage-report
-          path: htmlcov/
       - name: Build and upload documentation
         run: uv run mkdocs build -d _site
       - name: Upload artifact

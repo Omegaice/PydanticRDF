@@ -1,0 +1,123 @@
+site_name: PydanticRDF
+site_description: Bridge between Pydantic V2 models and RDF graphs
+site_url: https://omegaice.github.io/pydantic-rdf
+
+repo_name: Omegaice/pydantic-rdf
+repo_url: https://github.com/Omegaice/pydantic-rdf
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  
+extra:
+  social:
+  - icon: fontawesome/brands/python
+    link: https://pypi.org/project/pydantic-rdf/
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github 
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.instant
+    - navigation.path
+    - navigation.tracking
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: lime
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed
+  - toc:
+      permalink: true
+      permalink: "¤"
+
+plugins:
+  - search
+  - autorefs
+  - section-index
+  - git-revision-date-localized:
+      enabled: !ENV [DEPLOY, false]
+      enable_creation_date: true
+      type: timeago
+  - api-autonav:
+      modules: ['src/pydantic_rdf']
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          inventories:
+          - https://docs.python.org/3.11/objects.inv
+          - https://docs.pydantic.dev/2.11/objects.inv
+          - https://rdflib.readthedocs.io/en/7.1.4/objects.inv
+          options:
+            # General
+            find_stubs_package: true
+            show_bases: true
+            show_source: false
+            extensions:
+            - griffe_generics
+            - griffe_warnings_deprecated
+            - griffe_modernized_annotations
+            - griffe_pydantic:
+              schema: false
+            # Headings
+            heading_level: 1
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            # Members
+            summary: true
+            inherited_members: true
+            # Docstrings
+            docstring_options:
+              ignore_init_summary: true
+            docstring_section_style: list
+            merge_init_into_class: true
+            # Signatures
+            annotations_path: "brief"
+            line_length: 120
+            separate_signature: true
+            show_signature_annotations: true
+            show_overloads: true
+            signature_crossrefs: true
+            unwrap_annotated: false

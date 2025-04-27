@@ -6,9 +6,9 @@ serialization between Pydantic models and RDF graphs, and vice versa.
 
 Example:
     ```python
-    from rdflib import Namespace, URIRef
+    from rdflib import Namespace
     from pydantic_rdf import BaseRdfModel, WithPredicate
-    from pydantic import Field, Annotated
+    from typing import Annotated
 
     # Define a namespace
     EX = Namespace("http://example.org/")

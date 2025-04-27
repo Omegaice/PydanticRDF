@@ -15,8 +15,8 @@ class WithPredicate:
 
     Example:
         ```python
-        from pydantic import Annotated
-        from pydantic_rdf import WithPredicate
+        from typing import Annotated
+        from pydantic_rdf import BaseRdfModel, WithPredicate
         from rdflib import Namespace
 
         EX = Namespace("http://example.org/")
@@ -50,8 +50,8 @@ class WithDataType:
 
     Example:
         ```python
-        from pydantic import Annotated
-        from pydantic_rdf import WithDataType
+        from typing import Annotated
+        from pydantic_rdf import BaseRdfModel, WithDataType
         from rdflib.namespace import XSD
 
         class Product(BaseRdfModel):

@@ -1,16 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "pydantic-rdf"
 version = "0.1.0"
-description = "RDF-mappable Pydantic models"
-authors = [
-    { name = "Omegaice", email = "950526+Omegaice@users.noreply.github.com" }
-]
-requires-python = ">=3.11"
-license = {text = "MIT"}
 dependencies = [
     "pydantic>=2.11.3",
     "rdflib>=7.1.4",
 ]
+requires-python = ">=3.11"
+authors = [
+    { name = "Omegaice", email = "950526+Omegaice@users.noreply.github.com" }
+]
+description = "Bridge between Pydantic V2 models and RDF graphs"
+readme = "README.md"
+keywords = ["pydantic", "rdf", "semantic web", "linked data", "graph", "serialization"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Utilities",
+    "Typing :: Typed"
+]
+
+[project.urls]
+Documentation = "https://Omegaice.github.io/pydantic-rdf"
+Repository = "https://github.com/Omegaice/pydantic-rdf"
+Changelog = "https://github.com/Omegaice/pydantic-rdf/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Omegaice/pydantic-rdf/issues"
+
 
 [dependency-groups]
 dev = [
@@ -27,10 +50,6 @@ test = [
     "pytest-icdiff>=0.9",
     "pytest-sugar>=1.0.0",
 ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [tool.ruff]
 target-version = "py311"
@@ -52,7 +71,6 @@ select = [
 
 [tool.ruff.format]
 preview = true
-
 
 [tool.mypy]
 python_version = "3.11"

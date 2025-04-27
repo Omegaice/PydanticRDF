@@ -15,7 +15,7 @@ from typing import (
     get_origin,
 )
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.fields import FieldInfo
 from rdflib import RDF, Graph, Literal, URIRef
 
@@ -47,7 +47,6 @@ class BaseRdfModel(BaseModel):
     _rdf_namespace: ClassVar[IsPrefixNamespace | IsDefinedNamespace]
 
     uri: URIRef = Field(description="The URI identifier for this RDF entity")
-    _graph: Graph = PrivateAttr()
 
     # TYPE ANALYSIS HELPERS
     @classmethod
@@ -295,11 +294,6 @@ class BaseRdfModel(BaseModel):
 
         # Construct the instance with validation
         instance = cls.model_validate({"uri": uri, **data})
-
-        # Set private attributes after construction
-        private_attrs = {"_graph": graph}
-        for k, v in private_attrs.items():
-            setattr(instance, k, v)
 
         # Update cache with the constructed instance
         cache[(cls, uri)] = instance

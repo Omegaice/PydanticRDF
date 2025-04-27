@@ -6,8 +6,6 @@ from typing import (
     Any,
     ClassVar,
     Final,
-    NamedTuple,
-    Protocol,
     Self,
     TypeAlias,
     TypeVar,
@@ -22,6 +20,8 @@ from pydantic.fields import FieldInfo
 from rdflib import RDF, Graph, Literal, URIRef
 
 from pydantic_rdf.annotation import WithPredicate
+from pydantic_rdf.exceptions import CircularReferenceError, UnsupportedFieldTypeError
+from pydantic_rdf.types import IsDefinedNamespace, IsPrefixNamespace, TypeInfo
 
 logger = logging.getLogger(__name__)
 
@@ -29,46 +29,12 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound="BaseRdfModel")
 M = TypeVar("M", bound="BaseRdfModel")  # For cls parameter annotations
 
-
-class IsPrefixNamespace(Protocol):
-    def __getitem__(self, key: str) -> URIRef: ...
-
-
-class IsDefinedNamespace(Protocol):
-    def __getitem__(self, name: str, default=None) -> URIRef: ...  # type: ignore
-
-
-class IsNamespace(IsPrefixNamespace, IsDefinedNamespace, Protocol): ...  # type: ignore
-
-
-# Type aliases for the RDF entity cache
-CacheKey: TypeAlias = tuple[type["BaseRdfModel"], URIRef]
-RDFEntityCache: TypeAlias = MutableMapping[CacheKey, Any]
-
 # Sentinel object to detect circular references during parsing
 _IN_PROGRESS: Final = object()
 
 
-class TypeInfo(NamedTuple):
-    is_list: bool
-    item_type: Any
-
-
-# Custom exceptions
-class CircularReferenceError(Exception):
-    """Raised when a circular reference is detected during RDF parsing."""
-
-    def __init__(self, value: Any) -> None:
-        message = f"Circular reference detected for {value}"
-        super().__init__(message)
-
-
-class UnsupportedFieldTypeError(Exception):
-    """Raised when an unsupported field type is encountered during RDF parsing."""
-
-    def __init__(self, field_type: Any, field_name: str) -> None:
-        message = f"Unsupported field type: {field_type} for field {field_name}"
-        super().__init__(message)
+CacheKey: TypeAlias = tuple[type["BaseRdfModel"], URIRef]
+RDFEntityCache: TypeAlias = MutableMapping[CacheKey, object]
 
 
 class BaseRdfModel(BaseModel):
@@ -78,7 +44,7 @@ class BaseRdfModel(BaseModel):
 
     # Class variables for RDF mapping
     rdf_type: ClassVar[URIRef]
-    _rdf_namespace: ClassVar[IsNamespace]
+    _rdf_namespace: ClassVar[IsPrefixNamespace | IsDefinedNamespace]
 
     uri: URIRef = Field(description="The URI identifier for this RDF entity")
     _graph: Graph = PrivateAttr()
@@ -86,19 +52,39 @@ class BaseRdfModel(BaseModel):
     # TYPE ANALYSIS HELPERS
     @classmethod
     def _get_field_predicate(cls: type[M], field_name: str, field: FieldInfo) -> URIRef:
-        """Get RDF predicate URI for a field."""
+        """Return the RDF predicate URI for a given field name and FieldInfo.
+
+        Returns:
+            The RDF predicate URIRef for the field.
+        """
         if predicate := WithPredicate.extract(field):
             return predicate
         return cls._rdf_namespace[field_name]
 
     @staticmethod
     def _get_annotated_type(annotation: Any) -> Any | None:
+        """Return the type wrapped by Annotated, or None if not Annotated.
+
+        Args:
+            annotation: The type annotation to inspect.
+
+        Returns:
+            The type wrapped by Annotated, or None if not Annotated.
+        """
         if get_origin(annotation) is Annotated:
             return get_args(annotation)[0]
         return None
 
     @staticmethod
     def _get_union_type(annotation: Any) -> Any | None:
+        """Return the first non-None type in a Union/Optional annotation, or None.
+
+        Args:
+            annotation: The type annotation to inspect.
+
+        Returns:
+            The first non-None type in the Union, or None if not a Union.
+        """
         if get_origin(annotation) is Union:
             # Return the first non-None type (for Optional/Union)
             return next((arg for arg in get_args(annotation) if arg is not type(None)), None)
@@ -106,6 +92,14 @@ class BaseRdfModel(BaseModel):
 
     @staticmethod
     def _get_sequence_type(annotation: Any) -> Any | None:
+        """Return the item type if annotation is a Sequence (not str), else None.
+
+        Args:
+            annotation: The type annotation to inspect.
+
+        Returns:
+            The item type if annotation is a Sequence (not str), else None.
+        """
         origin = get_origin(annotation)
         if isinstance(origin, type) and issubclass(origin, Sequence) and not issubclass(origin, str):
             return get_args(annotation)[0]
@@ -113,7 +107,14 @@ class BaseRdfModel(BaseModel):
 
     @classmethod
     def _get_item_type(cls, annotation: Any) -> Any:
-        """Given a list/sequence annotation, returns the item type, unwrapping Annotated, Union, etc."""
+        """Recursively unwraps annotation to return the underlying item type.
+
+        Args:
+            annotation: The type annotation to unwrap.
+
+        Returns:
+            The underlying item type after unwrapping Annotated, Sequence, and Union.
+        """
         for extractor in (cls._get_annotated_type, cls._get_sequence_type, cls._get_union_type):
             if (item_type := extractor(annotation)) is not None:
                 return cls._get_item_type(item_type)
@@ -121,9 +122,14 @@ class BaseRdfModel(BaseModel):
 
     @classmethod
     def _resolve_type_info(cls, annotation: Any) -> TypeInfo:
-        """Analyzes a type annotation to determine if it represents a list type and extracts
-        the underlying item type. Handles nested type constructs like Annotated, Union/Optional,
-        and direct list/sequence types."""
+        """Return TypeInfo indicating if annotation is a list and its item type.
+
+        Args:
+            annotation: The type annotation to analyze.
+
+        Returns:
+            TypeInfo indicating whether the annotation is a list and its item type.
+        """
         if (item_type := cls._get_sequence_type(annotation)) is not None:
             return TypeInfo(is_list=True, item_type=item_type)
         if (item_type := cls._get_annotated_type(annotation)) is not None:
@@ -135,6 +141,14 @@ class BaseRdfModel(BaseModel):
     # FIELD EXTRACTION AND CONVERSION
     @classmethod
     def _extract_model_type(cls, type_annotation: Any) -> type["BaseRdfModel"] | None:
+        """Return the BaseRdfModel subclass from a type annotation, or None.
+
+        Args:
+            type_annotation: The type annotation to inspect.
+
+        Returns:
+            The BaseRdfModel subclass if present, else None.
+        """
         # Self reference
         if type_annotation is Self:
             return cls
@@ -163,6 +177,14 @@ class BaseRdfModel(BaseModel):
         type_annotation: Any,
         cache: RDFEntityCache,
     ) -> Any:
+        """Convert an RDF value to a Python value or nested BaseRdfModel instance.
+
+        Returns:
+            The converted Python value or BaseRdfModel instance.
+
+        Raises:
+            CircularReferenceError: If a circular reference is detected during parsing.
+        """
         # Check if this is a nested BaseRdfModel
         if (model_type := cls._extract_model_type(type_annotation)) and isinstance(value, URIRef):
             # Handle nested BaseRdfModel instances with caching to prevent recursion
@@ -196,6 +218,14 @@ class BaseRdfModel(BaseModel):
         field: FieldInfo,
         cache: RDFEntityCache,
     ) -> Any | None:
+        """Extract and convert the value(s) for a field from the RDF graph.
+
+        Returns:
+            The extracted and converted value(s) for the field, or None if not present.
+
+        Raises:
+            UnsupportedFieldTypeError: If the field type is not supported for RDF parsing.
+        """
         # Get all values for this predicate
         predicate = cls._get_field_predicate(field_name, field)
         values = list(graph.objects(uri, predicate))
@@ -218,6 +248,26 @@ class BaseRdfModel(BaseModel):
     # RDF PARSING
     @classmethod
     def parse_graph(cls: type[T], graph: Graph, uri: URIRef, _cache: RDFEntityCache | None = None) -> T:
+        """Parse an RDF entity from the graph into a model instance.
+
+        Uses a cache to prevent recursion and circular references.
+
+        Args:
+            _cache: Optional cache for already-parsed entities.
+
+        Returns:
+            An instance of the model corresponding to the RDF entity.
+
+        Raises:
+            CircularReferenceError: If a circular reference is detected during parsing.
+            ValueError: If the URI does not have the expected RDF type.
+            UnsupportedFieldTypeError: If a field type is not supported for RDF parsing.
+
+        Example:
+            ```python
+            model = MyModel.parse_graph(graph, EX.some_uri)
+            ```
+        """
         # Initialize cache if not provided
         cache: RDFEntityCache = {} if _cache is None else _cache
 
@@ -258,14 +308,37 @@ class BaseRdfModel(BaseModel):
 
     @classmethod
     def all_entities(cls: type[T], graph: Graph) -> list[T]:
-        """Get all entities of this model's type from the graph."""
+        """Return all entities of this model's RDF type from the graph.
+
+        Returns:
+            A list of model instances for each entity of this RDF type in the graph.
+
+        Raises:
+            CircularReferenceError: If a circular reference is detected during parsing.
+            ValueError: If any entity URI does not have the expected RDF type.
+            UnsupportedFieldTypeError: If a field type is not supported for RDF parsing.
+
+        Example:
+            ```python
+            entities = MyModel.all_entities(graph)
+            ```
+        """
         return [
             cls.parse_graph(graph, uri) for uri in graph.subjects(RDF.type, cls.rdf_type) if isinstance(uri, URIRef)
         ]
 
     # SERIALIZATION
     def model_dump_rdf(self: Self) -> Graph:
-        """Serialize a model instance to an RDF graph."""
+        """Serialize this model instance to an RDF graph.
+
+        Returns:
+            An RDFLib Graph representing this model instance.
+
+        Example:
+            ```python
+            graph = instance.model_dump_rdf()
+            ```
+        """
         graph = Graph()
         graph.add((self.uri, RDF.type, self.rdf_type))
 

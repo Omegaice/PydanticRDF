@@ -30,7 +30,7 @@ pip install pydantic-rdf
 ```python
 from rdflib import Namespace
 from pydantic_rdf import BaseRdfModel, WithPredicate
-from pydantic import Annotated
+from typing import Annotated
 
 # Define a model
 EX = Namespace("http://example.org/")

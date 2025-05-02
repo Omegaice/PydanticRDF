@@ -21,7 +21,7 @@ from rdflib import RDF, Graph, Literal, URIRef
 
 from pydantic_rdf.annotation import WithPredicate
 from pydantic_rdf.exceptions import CircularReferenceError, UnsupportedFieldTypeError
-from pydantic_rdf.types import IsDefinedNamespace, IsPrefixNamespace, TypeInfo
+from pydantic_rdf.types import IsDefinedNamespace, IsPrefixNamespace, PydanticURIRef, TypeInfo
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +43,10 @@ class BaseRdfModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # Class variables for RDF mapping
-    rdf_type: ClassVar[URIRef]
+    rdf_type: ClassVar[PydanticURIRef]
     _rdf_namespace: ClassVar[IsPrefixNamespace | IsDefinedNamespace]
 
-    uri: URIRef = Field(description="The URI identifier for this RDF entity")
+    uri: PydanticURIRef = Field(description="The URI identifier for this RDF entity")
 
     # TYPE ANALYSIS HELPERS
     @classmethod

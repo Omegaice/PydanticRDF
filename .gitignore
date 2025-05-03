@@ -199,3 +199,5 @@ result
 
 # Development environments
 .direnv
+
+**/.claude/settings.local.json

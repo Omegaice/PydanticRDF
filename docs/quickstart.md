@@ -121,6 +121,44 @@ post = BlogPosting(
 graph = post.model_dump_rdf()
 ```
 
+## JSON Schema Generation
+
+PydanticRDF supports generating valid JSON schemas for your RDF models:
+
+```python
+from pydantic import TypeAdapter
+
+# Define your model as before
+class Person(BaseRdfModel):
+    rdf_type = SDO.Person
+    _rdf_namespace = SDO
+    
+    name: str
+    email: str
+
+# Generate JSON schema
+schema = TypeAdapter(Person).json_schema()
+
+# URIRef fields will be properly represented as strings with URI format
+# {
+#   "properties": {
+#     "uri": {
+#       "type": "string",
+#       "format": "uri",
+#       "description": "The URI identifier for this RDF entity"
+#     },
+#     "name": {
+#       "type": "string"
+#     },
+#     "email": {
+#       "type": "string"
+#     }
+#   },
+#   "required": ["uri", "name", "email"],
+#   ...
+# }
+```
+
 ## Next Steps
 
 Now that you have the basics, you can:

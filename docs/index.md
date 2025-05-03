@@ -25,6 +25,7 @@ The library is designed to be simple and intuitive, following Pydantic's design 
 - **Seamless Integration**: Works with existing Pydantic and RDF workflows
 - **Flexible Mapping**: Custom predicate and datatype annotations
 - **Comprehensive Support**: Handles nested models, lists, and circular references
+- **JSON Schema**: Generate valid JSON schemas with proper URI field handling
 
 ## Example
 

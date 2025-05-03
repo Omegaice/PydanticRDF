@@ -18,6 +18,7 @@ A Python library that bridges Pydantic V2 models and RDF graphs, enabling seamle
 - 🔄 **Serialization**: Convert Pydantic models to RDF triples with customizable predicates
 - 📥 **Deserialization**: Parse RDF data into validated Pydantic models
 - 🧩 **Complex Structures**: Support for nested models, lists, and circular references
+- 📊 **JSON Schema**: Generate valid JSON schemas from RDF models with proper URI handling
 
 ## Installation
 
